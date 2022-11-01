@@ -1,0 +1,26 @@
+syntax = "proto3";
+import "geo.proto";
+import "utils.proto";
+
+option java_multiple_files = true;
+option java_package = "me.plony.regions";
+option java_outer_classname = "RegionsProto";
+
+package regions;
+
+service Regions {
+  rpc getRegions(Empty) returns (stream Region) {}
+  rpc getRegionsGeoJson(Empty) returns (geo.FeatureCollection) {}
+  rpc getRegionContaining(geo.Point) returns (Contains) {}
+  rpc geometryOfRegion(stream Id) returns (stream geo.MultiPolygon) {}
+}
+
+message Contains {
+  optional Region region = 1;
+}
+
+message Region {
+  uint64 id = 1;
+  string name = 2;
+  optional uint64 parent_id = 3;
+}

@@ -1,0 +1,2 @@
+CREATE USER plony WITH PASSWORD 'secret';
+CREATE DATABASE regions WITH OWNER plony;
