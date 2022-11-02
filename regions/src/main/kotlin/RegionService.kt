@@ -110,6 +110,11 @@ private fun database.Region.toProto() = feature {
         value = this@toProto.name
     })
 
+    properties.add(property {
+        name = "abbr"
+        value = this@toProto.abbr
+    })
+
     geometry = asMultiPolygon()
 }
 

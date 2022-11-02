@@ -7,6 +7,7 @@ import org.jetbrains.exposed.dao.id.LongIdTable
 
 object Regions : LongIdTable() {
     val name = text("name")
+    val abbr = text("abbr")
     val parent = optReference("parent", Regions).default(null)
     val type = enumeration<RegionType>("type")
 }
@@ -20,6 +21,7 @@ class Region(id: EntityID<Long>) : LongEntity(id) {
     companion object : LongEntityClass<Region>(Regions)
 
     var name by Regions.name
+    var abbr by Regions.abbr
     var parent by Region optionalReferencedOn Regions.parent
     var type by Regions.type
 

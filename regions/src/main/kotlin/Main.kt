@@ -56,6 +56,7 @@ fun configureDatabase() {
                 .forEach {
                     val region = Region.new {
                         name = it.properties["NAME"]!!.jsonPrimitive.content
+                        abbr = it.properties["ABBR"]!!.jsonPrimitive.content
                         type = RegionType.District
                     }
                     when (val geometry = it.geometry) {

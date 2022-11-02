@@ -15,18 +15,6 @@ fun me.plony.geo.Feature.toGeo() =
         }
     )
 
-fun Any.toJsonElement() = when {
-    `is`(FloatValue::class.java) -> JsonPrimitive(unpack(FloatValue::class.java).value)
-    `is`(Int64Value::class.java) -> JsonPrimitive(unpack(FloatValue::class.java).value)
-    `is`(Int32Value::class.java) -> JsonPrimitive(unpack(Int32Value::class.java).value)
-    `is`(UInt32Value::class.java) -> JsonPrimitive(unpack(UInt32Value::class.java).value)
-    `is`(UInt64Value::class.java) -> JsonPrimitive(unpack(UInt64Value::class.java).value)
-    `is`(StringValue::class.java) -> JsonPrimitive(unpack(StringValue::class.java).value)
-    `is`(BoolValue::class.java) -> JsonPrimitive(unpack(BoolValue::class.java).value)
-    else -> error("Unsupported type of $this")
-}
-
-
 fun me.plony.geo.Polygon.toGeo() = ringsList.map {
     it.pointsList.map {
         it.toGeo()
