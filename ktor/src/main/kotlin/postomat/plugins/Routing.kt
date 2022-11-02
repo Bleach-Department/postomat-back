@@ -5,6 +5,7 @@ import io.ktor.http.*
 import io.ktor.server.routing.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
+import kotlinx.serialization.Serializable
 import me.plony.empty.Empty
 import me.plony.regions.Region
 import me.plony.regions.regionOrNull
@@ -36,19 +37,20 @@ fun Application.configureRouting() {
                     lat = point.coordinates.latitude
                     long = point.coordinates.longitude
                 }).regionOrNull
-            call.respond(
-                if (region != null) HttpStatusCode.OK
-                else HttpStatusCode.NotFound,
-                region?.toMap() ?: mapOf()
-            )
+            region?.toMap()?.let {
+                call.respond(
+                    HttpStatusCode.OK,
+                    it
+                )
+            } ?: call.respond(HttpStatusCode.NotFound)
         }
     }
 }
 
-private fun Region.toMap() =
-    mapOf(
-        "id" to id,
-        "name" to name
-    )
+private fun Region.toMap() = RegionDTO(id, name)
 
-
+@Serializable
+data class RegionDTO(
+    val id: Long,
+    val name: String
+)
