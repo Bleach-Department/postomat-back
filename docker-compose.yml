@@ -6,6 +6,7 @@ services:
     restart: always
     environment:
       - REGION_PORT=8082
+      - POSTOMAT_PORT=8083
     links:
       - regions
     networks:
@@ -33,6 +34,7 @@ services:
       - "DATABASE_CONNECTOR=jdbc:postgresql://db:5432/postgres"
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=postgres
+      - POSTOMAT_PORT=8083
     networks:
       - backend
     links:
