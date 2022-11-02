@@ -33,8 +33,8 @@ fun Application.configureRouting() {
             val point = Point.fromJson(pointString)
             val region = Stubs.region
                 .getRegionContaining(me.plony.geo.point {
-                    lat = point.coordinates.longitude
-                    long = point.coordinates.latitude
+                    lat = point.coordinates.latitude
+                    long = point.coordinates.longitude
                 }).regionOrNull
             call.respond(
                 if (region != null) HttpStatusCode.OK
