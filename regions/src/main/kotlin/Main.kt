@@ -34,8 +34,8 @@ fun main() {
 
 
 fun configureDatabase() {
-    Database.connect(System.getenv("DATABASE_CONNECTOR").also { println(it) }, driver = "org.postgresql.Driver",
-        user = System.getenv("DATABASE_USER").also { println(it) }, password = System.getenv("DATABASE_PASSWORD").also { println(it) })
+    Database.connect(System.getenv("DATABASE_CONNECTOR"), driver = "org.postgresql.Driver",
+        user = System.getenv("DATABASE_USER"), password = System.getenv("DATABASE_PASSWORD"))
 
     transaction {
         SchemaUtils.create(

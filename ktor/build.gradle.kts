@@ -29,7 +29,7 @@ dependencies {
     implementation("io.ktor:ktor-server-websockets-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
     implementation("ch.qos.logback:logback-classic:1.4.4")
-    implementation("com.github.papsign:Ktor-OpenAPI-Generator:0.3-beta.3")
+    implementation("io.bkbn:kompendium-core:3.5.0")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
 }
 
@@ -37,5 +37,10 @@ ktor {
     docker {
         localImageName.set("$group-${project.name}")
         imageTag.set(version.toString())
+    }
+}
+tasks {
+    compileKotlin {
+        kotlinOptions.jvmTarget = "17"
     }
 }
