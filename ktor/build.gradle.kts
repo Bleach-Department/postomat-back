@@ -25,11 +25,12 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktor_version")
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
+    implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
     implementation("io.ktor:ktor-server-websockets-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
+    implementation("dev.forst:ktor-openapi-generator:0.5.2")
     implementation("ch.qos.logback:logback-classic:1.4.4")
-    implementation("io.bkbn:kompendium-core:3.5.0")
+//    implementation("io.bkbn:kompendium-core:3.5.0")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
 }
 

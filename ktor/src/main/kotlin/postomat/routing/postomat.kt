@@ -1,8 +1,16 @@
 package postomat.routing
 
+import com.papsign.ktor.openapigen.annotations.Response
+import com.papsign.ktor.openapigen.annotations.parameters.QueryParam
+import com.papsign.ktor.openapigen.content.type.binary.BinaryContentTypeParser.respond
+import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
+import com.papsign.ktor.openapigen.route.path.normal.delete
+import com.papsign.ktor.openapigen.route.path.normal.get
+import com.papsign.ktor.openapigen.route.path.normal.post
+import com.papsign.ktor.openapigen.route.response.respond
+import com.papsign.ktor.openapigen.route.route
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.flow.toList
@@ -13,44 +21,43 @@ import me.plony.geo.point
 import me.plony.postomat.Postomat
 import stubs.Stubs
 
-fun Routing.postomat() {
+fun NormalOpenAPIRoute.postomat() {
     route("/postomats") {
-        get {
+        get<Unit, List<PostomatDTO>> {
             val postomats = Stubs.postomat.getAll(Empty.getDefaultInstance())
                 .toList()
                 .map { it.toDTO() }
 
-            call.respond(postomats)
+            respond(postomats)
         }
 
-        post {
-            val point = call.receive<Point>()
+        post<Unit, PostomatDTO, Point> { _, point ->
             val postomat = Stubs.postomat.add(point {
                 lat = point.lat
                 long = point.long
             }).toDTO()
-            call.respond(postomat)
+
+            respond(postomat)
         }
-        delete {
-            val id = call.receive<Id>()
+        delete< Id, Unit> { id ->
             Stubs.postomat.remove(id { this.id = id.id })
-            call.respond(HttpStatusCode.OK)
+            respond(Unit)
         }
     }
 }
 
-@Serializable
+@Response("id of the element")
 data class Id(
-    val id: Long
+    @QueryParam("id") val id: Long
 )
 
-@Serializable
+@Response("Point on the map")
 data class Point(
-    val lat: Double,
-    val long: Double
+    @QueryParam("latitude") val lat: Double,
+    @QueryParam("longitude") val long: Double
 )
 
-@Serializable
+@Response("Postomat")
 data class PostomatDTO(
     val id: Long,
     val point: Point,
