@@ -39,4 +39,5 @@ message Postomat {
   uint64 id = 1;
   geo.Point point = 2;
   optional uint64 regionId = 3;
+  PostomatType type = 4;
 }

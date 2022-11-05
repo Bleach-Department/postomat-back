@@ -24,6 +24,7 @@ import me.plony.empty.Empty
 import me.plony.empty.id
 import me.plony.geo.point
 import me.plony.postomat.Postomat
+import me.plony.postomat.PostomatType
 import me.plony.postomat.addRequest
 import stubs.Stubs
 import java.io.File
@@ -62,7 +63,13 @@ data class Point(
 data class PostomatDTO(
     val id: Long,
     val point: Point,
-    val regionId: Long?
+    val regionId: Long?,
+    val type: PostomatType
 )
 
-private fun Postomat.toDTO() = PostomatDTO(id, Point(point.lat, point.long), if (hasRegionId()) regionId else null)
+private fun Postomat.toDTO() = PostomatDTO(
+    id,
+    Point(point.lat, point.long),
+    if (hasRegionId()) regionId else null,
+    type
+)

@@ -106,6 +106,10 @@ private fun database.Polygon.toProto() = polygon {
 }
 private fun database.Region.toProto() = feature {
     properties.add(property {
+        name = "id"
+        value = this@toProto.id.toString()
+    })
+    properties.add(property {
         name = "name"
         value = this@toProto.name
     })
@@ -114,6 +118,20 @@ private fun database.Region.toProto() = feature {
         name = "abbr"
         value = this@toProto.abbr
     })
+    if (parent != null) {
+        properties.add(property {
+            name = "parent_id"
+            value = this@toProto.parent!!.id.toString()
+        })
+        properties.add(property {
+            name = "parent_name"
+            value = this@toProto.parent!!.name
+        })
+        properties.add(property {
+            name = "parent_abbr"
+            value = this@toProto.parent!!.abbr
+        })
+    }
 
     geometry = asMultiPolygon()
 }

@@ -53,6 +53,7 @@ fun NormalOpenAPIRoute.regions() {
         }
         route("/geo/contains") {
             get<Point, RegionDTO>(
+                StatusCode(HttpStatusCode.OK),
                 StatusCode(HttpStatusCode.NotFound)
             ) { point ->
                 val region = Stubs.region
@@ -68,10 +69,11 @@ fun NormalOpenAPIRoute.regions() {
     }
 }
 
-private fun Region.toDTO() = RegionDTO(id, name)
+private fun Region.toDTO() = RegionDTO(id, name, if (hasParentId()) parentId else null)
 
 @Response("Region")
 data class RegionDTO(
     val id: Long,
-    val name: String
+    val name: String,
+    val parentId: Long?
 )
