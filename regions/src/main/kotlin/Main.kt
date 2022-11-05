@@ -65,7 +65,7 @@ fun configureDatabase() {
                 .forEach {
                     val region = Region.new {
                         name = it.properties["NAME"]!!.jsonPrimitive.content
-                        abbr = it.properties["ABBREV"]!!.jsonPrimitive.content
+                        abbr = it.properties["ABBREV"]?.jsonPrimitive?.content ?: it.properties["NAME"]!!.jsonPrimitive.content
                         type = RegionType.District
                         parent = Region.find { Regions.name eq it.properties["NAME_AO"]!!.jsonPrimitive.content }.first()
                     }
