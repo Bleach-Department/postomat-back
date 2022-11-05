@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+message LatitudeLongitude {
+  float lat = 1;
+  float lon = 2;
+}
+
+message XY {
+  float x = 1;
+  float y = 2;
+}

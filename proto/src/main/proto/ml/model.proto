@@ -1,0 +1,26 @@
+syntax = "proto3";
+import "ml/common.proto";
+
+
+message BBox {
+  XY upper_left = 1;
+  XY bottom_right = 2;
+}
+
+message Assessment {
+  repeated float score = 1;
+}
+
+message InBounds {
+  BBox bounds = 1;
+  repeated XY points = 2;
+}
+
+message AssessRequest {
+  repeated XY points = 1;
+}
+
+service Model {
+  rpc Assess(AssessRequest) returns (Assessment);
+  rpc AssessInBounds(InBounds) returns (Assessment);
+}

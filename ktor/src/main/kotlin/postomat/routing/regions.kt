@@ -1,7 +1,6 @@
 package postomat.routing
 
 import com.papsign.ktor.openapigen.annotations.Response
-import com.papsign.ktor.openapigen.content.type.binary.BinaryContentTypeParser.respond
 import com.papsign.ktor.openapigen.route.EndpointInfo
 import com.papsign.ktor.openapigen.route.StatusCode
 import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
@@ -9,38 +8,51 @@ import com.papsign.ktor.openapigen.route.path.normal.get
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import io.github.dellisd.spatialk.geojson.FeatureCollection
-import io.github.dellisd.spatialk.geojson.Point
+import io.github.reactivecircus.cache4k.Cache
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.Serializable
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import me.plony.empty.Empty
 import me.plony.regions.Region
 import me.plony.regions.regionOrNull
 import stubs.Stubs
 import toGeo
 
+val regionCache = Cache.Builder()
+    .build<Int, FeatureCollection>()
+
 fun NormalOpenAPIRoute.regions() {
     route("/geo") {
+        get<Unit, List<RegionDTO>> {
+            val regions = Stubs.region.getRegions(Empty.getDefaultInstance())
+                .map { it.toDTO() }
+                .toList()
+            respond(regions)
+        }
+
         route("ao.json") {
             get<Unit, String>(EndpointInfo(
                 "Returns GeoJson of regions"
             )) {
-                val geo = Stubs.region
-                    .getRegionsGeoJson(Empty.getDefaultInstance())
+                val geoJson = regionCache.get(1) {
+                    val geo = Stubs.region
+                        .getRegionsGeoJson(Empty.getDefaultInstance())
 
-                val geoJson = FeatureCollection(
-                    geo.featuresList
-                        .map {
-                            it.toGeo()
-                        }
-                )
+                    FeatureCollection(
+                        geo.featuresList
+                            .map {
+                                it.toGeo()
+                            }
+                    )
+                }
                 respond(geoJson.json())
             }
         }
         route("/geo/contains") {
-            get<postomat.routing.Point, RegionDTO>(
+            get<Point, RegionDTO>(
                 StatusCode(HttpStatusCode.NotFound)
             ) { point ->
                 val region = Stubs.region
@@ -48,7 +60,7 @@ fun NormalOpenAPIRoute.regions() {
                         lat = point.lat
                         long = point.long
                     }).regionOrNull
-                region?.toMap()?.let {
+                region?.toDTO()?.let {
                     respond(it)
                 } ?: pipeline.call.respond(HttpStatusCode.NotFound)
             }
@@ -56,7 +68,7 @@ fun NormalOpenAPIRoute.regions() {
     }
 }
 
-private fun Region.toMap() = RegionDTO(id, name)
+private fun Region.toDTO() = RegionDTO(id, name)
 
 @Response("Region")
 data class RegionDTO(

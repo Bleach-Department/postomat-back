@@ -9,17 +9,24 @@ import com.papsign.ktor.openapigen.route.path.normal.get
 import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
+import io.github.reactivecircus.cache4k.Cache
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import me.plony.empty.Empty
 import me.plony.empty.id
 import me.plony.geo.point
 import me.plony.postomat.Postomat
+import me.plony.postomat.addRequest
 import stubs.Stubs
+import java.io.File
 
 fun NormalOpenAPIRoute.postomat() {
     route("/postomats") {
@@ -31,19 +38,12 @@ fun NormalOpenAPIRoute.postomat() {
             respond(postomats)
         }
 
-        post<Unit, PostomatDTO, Point> { _, point ->
-            val postomat = Stubs.postomat.add(point {
-                lat = point.lat
-                long = point.long
-            }).toDTO()
-
-            respond(postomat)
-        }
-        delete< Id, Unit> { id ->
+        delete<Id, Unit> { id ->
             Stubs.postomat.remove(id { this.id = id.id })
             respond(Unit)
         }
     }
+
 }
 
 @Response("id of the element")
@@ -52,6 +52,7 @@ data class Id(
 )
 
 @Response("Point on the map")
+@Serializable
 data class Point(
     @QueryParam("latitude") val lat: Double,
     @QueryParam("longitude") val long: Double

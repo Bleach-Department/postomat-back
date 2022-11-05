@@ -30,6 +30,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
     implementation("dev.forst:ktor-openapi-generator:0.5.2")
     implementation("ch.qos.logback:logback-classic:1.4.4")
+    implementation("io.github.reactivecircus.cache4k:cache4k:0.8.0")
 //    implementation("io.bkbn:kompendium-core:3.5.0")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
 }

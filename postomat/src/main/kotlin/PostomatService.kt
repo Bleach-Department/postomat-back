@@ -4,6 +4,7 @@ import me.plony.empty.Empty
 import me.plony.empty.Id
 import me.plony.geo.Point
 import me.plony.geo.point
+import me.plony.postomat.AddRequest
 import me.plony.postomat.Postomat
 import me.plony.postomat.PostomatServiceGrpcKt
 import me.plony.postomat.postomat
@@ -12,15 +13,16 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import stubs.Stubs
 
 class PostomatService : PostomatServiceGrpcKt.PostomatServiceCoroutineImplBase() {
-    override suspend fun add(request: Point): Postomat {
-        val region = Stubs.region.getRegionContaining(request)
+    override suspend fun add(request: AddRequest): Postomat {
+        val region = Stubs.region.getRegionContaining(request.point)
             .regionOrNull
 
         return transaction {
             database.Postomat.new {
-                lat = request.lat
-                long = request.long
+                lat = request.point.lat
+                long = request.point.long
                 this.region = region?.id
+                this.type = request.type
             }
         }.toProto()
     }

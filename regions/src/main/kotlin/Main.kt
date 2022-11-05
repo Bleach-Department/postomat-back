@@ -1,19 +1,15 @@
 import database.*
-import io.github.dellisd.spatialk.geojson.FeatureCollection
-import io.github.dellisd.spatialk.geojson.MultiPolygon
+import database.Point
+import io.github.dellisd.spatialk.geojson.*
 import io.github.dellisd.spatialk.geojson.Polygon
-import io.github.dellisd.spatialk.geojson.Position
-import io.grpc.ServerBuilder
 import io.grpc.netty.NettyServerBuilder
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import stubs.Ports
-import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.SocketAddress
 import kotlin.concurrent.thread
 
 fun main() {
@@ -47,32 +43,51 @@ fun configureDatabase() {
     }
     transaction {
         if (Region.count() == 0L) {
-            val featureCollection = FeatureCollection.fromJson(
+            val mo = FeatureCollection.fromJson(
+                ClassLoader.getSystemResource("mo.geojson")
+                    .readText()
+            )
+            val ao = FeatureCollection.fromJson(
                 ClassLoader.getSystemResource("ao.geojson")
                     .readText()
             )
 
-            featureCollection.features
+            ao.features
+                .forEach {
+                    val region = Region.new {
+                        name = it.properties["NAME"]!!.jsonPrimitive.content
+                        abbr = it.properties["ABBREV"]!!.jsonPrimitive.content
+                        type = RegionType.AdministrativeDistrict
+                    }
+                    createGeometry(it, region)
+                }
+            mo.features
                 .forEach {
                     val region = Region.new {
                         name = it.properties["NAME"]!!.jsonPrimitive.content
                         abbr = it.properties["ABBREV"]!!.jsonPrimitive.content
                         type = RegionType.District
+                        parent = Region.find { Regions.name eq it.properties["NAME_AO"]!!.jsonPrimitive.content }.first()
                     }
-                    when (val geometry = it.geometry) {
-                        is MultiPolygon -> {
-                            geometry.coordinates.forEach {
-                                createPolygon(region, it)
-                            }
-                        }
-                        is Polygon -> {
-                            createPolygon(region, geometry.coordinates)
-                        }
-                        else -> error("${it.geometry} not supported")
-                    }
-
+                    createGeometry(it, region)
                 }
         }
+    }
+}
+
+private fun createGeometry(it: Feature, region: Region) {
+    when (val geometry = it.geometry) {
+        is MultiPolygon -> {
+            geometry.coordinates.forEach {
+                createPolygon(region, it)
+            }
+        }
+
+        is Polygon -> {
+            createPolygon(region, geometry.coordinates)
+        }
+
+        else -> error("${it.geometry} not supported")
     }
 }
 

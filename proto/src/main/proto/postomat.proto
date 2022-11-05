@@ -9,11 +9,31 @@ option java_outer_classname = "PostomatProto";
 package postomat;
 
 service PostomatService {
-  rpc add(geo.Point) returns (Postomat) {}
+  rpc add(AddRequest) returns (Postomat) {}
   rpc getAll(Empty) returns (stream Postomat) {}
   rpc remove(Id) returns (Empty) {}
 }
 
+
+
+message AddRequest {
+  geo.Point point = 1;
+  PostomatType type = 2;
+}
+
+enum PostomatType {
+    CulturalHouse = 0;
+    DomesticService = 1;
+    House = 2;
+    Kiosk = 3;
+    Lib = 4;
+    Market = 5;
+    PaperKiosks = 6;
+    PickPoint = 7;
+    Sport = 8;
+    Stationary = 9;
+    TechnoPark = 10;
+}
 
 message Postomat {
   uint64 id = 1;

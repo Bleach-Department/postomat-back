@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+import "ml/common.proto";
+
+
+service TransformLocation {
+  rpc ToXY(LatitudeLongitude) returns (XY);
+  rpc ToLatitudeLongitude(XY) returns (LatitudeLongitude);
+}
