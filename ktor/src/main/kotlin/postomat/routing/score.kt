@@ -71,7 +71,7 @@ private fun loadCache() {
                     val yi = csv[0].indexOf("y")
                     csv.drop(1).map {
                         println(it[i])
-                        Geometry.fromJson(it[i]) to xY {
+                        Geometry.fromJson(it[i].replace('\'', '"')) to xY {
                             x = it[xi].toFloat()
                             y = it[yi].toFloat()
                         }
