@@ -1,6 +1,7 @@
 package postomat.routing
 
 import assessRequest
+import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import com.google.gson.Gson
 import com.papsign.ktor.openapigen.annotations.Response
 import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
@@ -61,14 +62,14 @@ private fun loadCache() {
         cache = if (file.exists()) Json.decodeFromString(file.readText())
         else {
             datasets.flatMap { (f, t) ->
-                val csv = ClassLoader.getSystemResource("dataset/$f")
-                    .readText().split("\n")
-                    .map { it.split(",") }
+                val csv = csvReader().readAll(ClassLoader.getSystemResource("dataset/$f")
+                    .readText())
                 if ("geoData" in csv[0]) {
                     val i = csv[0].indexOf("geoData")
                     val xi = csv[0].indexOf("x")
                     val yi = csv[0].indexOf("y")
                     csv.drop(1).map {
+                        println(it[i])
                         io.github.dellisd.spatialk.geojson.Point.fromJson(it[i]) to xY {
                             x = it[xi].toFloat()
                             y = it[yi].toFloat()
