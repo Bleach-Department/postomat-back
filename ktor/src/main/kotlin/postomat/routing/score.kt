@@ -9,6 +9,7 @@ import com.papsign.ktor.openapigen.route.path.normal.get
 import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
+import io.github.dellisd.spatialk.geojson.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -70,7 +71,7 @@ private fun loadCache() {
                     val yi = csv[0].indexOf("y")
                     csv.drop(1).map {
                         println(it[i])
-                        io.github.dellisd.spatialk.geojson.Point.fromJson(it[i]) to xY {
+                        Geometry.fromJson(it[i]) to xY {
                             x = it[xi].toFloat()
                             y = it[yi].toFloat()
                         }
@@ -78,8 +79,13 @@ private fun loadCache() {
                         Stubs.model.assess(assessRequest {
                             points.addAll(it.map { it.second })
                         }).scoreList.zip(it).map { (score, p) ->
+                            val point = when (val a = p.first) {
+                                is MultiPoint -> Point(a.coordinates[0].latitude, a.coordinates[0].longitude)
+                                is io.github.dellisd.spatialk.geojson.Point -> Point(a.coordinates.latitude, a.coordinates.longitude)
+                                else -> error("Unknown ${p.first}")
+                            }
                             PointScore(
-                                Point(p.first.coordinates.latitude, p.first.coordinates.longitude),
+                                point,
                                 t,
                                 score.toDouble()
                             )
