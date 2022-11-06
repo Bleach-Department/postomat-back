@@ -32,6 +32,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.4.4")
     implementation("io.github.reactivecircus.cache4k:cache4k:0.8.0")
     implementation("com.github.doyaaaaaken:kotlin-csv-jvm:1.6.0")
+    implementation("io.github.evanrupert:excelkt:1.0.2")
 //    implementation("io.bkbn:kompendium-core:3.5.0")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
 }

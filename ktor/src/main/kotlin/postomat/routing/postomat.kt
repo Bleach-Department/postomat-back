@@ -35,7 +35,7 @@ fun NormalOpenAPIRoute.postomat() {
                     .map { it.toDTO() }
             }
 
-            respond(postomats.applyFilter(filter))
+            respond(postomats.applyFilter(filter) { it })
         }
 
         delete<Id, Unit> { id ->

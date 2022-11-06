@@ -10,6 +10,8 @@ import com.papsign.ktor.openapigen.route.path.normal.post
 import com.papsign.ktor.openapigen.route.response.respond
 import com.papsign.ktor.openapigen.route.route
 import io.github.dellisd.spatialk.geojson.*
+import io.github.evanrupert.excelkt.Sheet
+import io.github.evanrupert.excelkt.workbook
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -29,8 +31,10 @@ import me.plony.empty.id
 import me.plony.geo.point
 import me.plony.postomat.PostomatType
 import me.plony.postomat.addRequest
+import me.plony.regions.regionOrNull
 import stubs.Stubs
 import xY
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 fun NormalOpenAPIRoute.score() {
@@ -49,9 +53,23 @@ fun NormalOpenAPIRoute.score() {
         route("/heatmap") {
             get<Filter, List<PointScoreWithRegion>> { filter ->
                 if (::cache.isInitialized) {
-                    respond(cache.map { it.first }.applyFilter(filter))
+                    respond(cache.map { it.first }.applyFilter(filter) { it })
                 } else {
                     pipeline.call.respond(HttpStatusCode.TemporaryRedirect)
+                }
+            }
+        }
+        route("/export") {
+            get<Filter, File> { filter ->
+                pipeline.call.respondOutputStream {
+                    val data = excelData(filter)
+                    workbook {
+                        sheet {
+                            data.forEach {
+                                generateExcelRow(it)
+                            }
+                        }
+                    }.xssfWorkbook.write(this)
                 }
             }
         }
@@ -59,21 +77,65 @@ fun NormalOpenAPIRoute.score() {
 
     CoroutineScope(Dispatchers.IO).launch {
         loadCache()
-//        Stubs.postomat.removeAll(Empty.getDefaultInstance())
-//        cache.sortedBy { it.score }
-//            .reversed()
-//            .take(1000)
-//            .forEach {
-//                Stubs.postomat.add(addRequest {
-//                    point = point {
-//                        lat = it.point.lat
-//                        long = it.point.long
-//                    }
-//                    type = it.type
-//                })
-//            }
     }
 }
+
+private suspend fun excelData(filter: Filter): List<ExcelData> {
+    val data = cache.applyFilter(filter) {
+        it.first
+    }.withIndex().mapNotNull { (index, p) ->
+        val (point, address) = p
+        val region = Stubs.region.getRegion(id { id = point.regionId }).regionOrNull ?: return@mapNotNull null
+        val parent = Stubs.region.getRegion(id { id = region.parentId }).regionOrNull ?: return@mapNotNull null
+        ExcelData(
+            index + 1,
+            parent.name,
+            region.name,
+            point.type,
+            "[${point.point.long}, ${point.point.lat}]",
+            address ?: "-",
+            point.score
+        )
+    }
+    return data
+}
+
+private fun Sheet.generateExcelRow(it: ExcelData) {
+    row {
+        cell(it.number)
+        cell(it.ao)
+        cell(it.mo)
+        cell(
+            when (it.type) {
+                PostomatType.CulturalHouse -> "Культурный дом"
+                PostomatType.DomesticService -> "Бытовой сервис"
+                PostomatType.House -> "Дом"
+                PostomatType.Kiosk -> "Киоск"
+                PostomatType.Lib -> "Библиотека"
+                PostomatType.Market -> "Рынок"
+                PostomatType.PaperKiosks -> "Бумажный киоск"
+                PostomatType.PickPoint -> "Постомат"
+                PostomatType.Sport -> "Спортовный центр"
+                PostomatType.Stationary -> "Магазин"
+                PostomatType.TechnoPark -> "Технопарк"
+                PostomatType.UNRECOGNIZED -> ""
+            }
+        )
+        cell(it.coordinate)
+        cell(it.address)
+        cell(it.score)
+    }
+}
+
+data class ExcelData(
+    val number: Int,
+    val ao: String,
+    val mo: String,
+    val type: PostomatType,
+    val coordinate: String,
+    val address: String,
+    val score: Double,
+)
 
 private suspend fun loadCache() {
     cache = if (file.exists())
