@@ -47,7 +47,7 @@ fun NormalOpenAPIRoute.score() {
         }
 
         route("/heatmap") {
-            get<Unit, List<PointScore>> {
+            get<Unit, List<PointScoreWithRegion>> {
                 if (::cache.isInitialized) {
                     respond(cache)
                 } else {
@@ -59,33 +59,6 @@ fun NormalOpenAPIRoute.score() {
 
     CoroutineScope(Dispatchers.IO).launch {
         loadCache()
-
-        Stubs.postomat.removeAll(Empty.getDefaultInstance())
-
-        cache.sortedBy { it.score }
-            .reversed()
-            .take(100)
-            .forEach {
-                Stubs.postomat.add(addRequest {
-                    point = point {
-                        lat = it.point.lat
-                        long = it.point.long
-                    }
-                    type = it.type
-                })
-            }
-
-        file.writeText(Json.encodeToString(cache.withIndex().map { (index, it) ->
-            PointScoreWithRegion(
-                it.point,
-                it.type,
-                it.score,
-                Stubs.region.getRegionContaining(point {
-                    lat = it.point.lat
-                    long = it.point.long
-                }).region.id
-            ).also { println(index) }
-        }))
     }
 }
 
@@ -113,10 +86,14 @@ private suspend fun loadCache() {
                             is io.github.dellisd.spatialk.geojson.Point -> Point(a.coordinates.latitude, a.coordinates.longitude)
                             else -> error("Unknown ${p.first}")
                         }
-                        PointScore(
+                        PointScoreWithRegion(
                             point,
                             t,
-                            score.toDouble()
+                            score.toDouble(),
+                            Stubs.region.getRegionContaining(point {
+                                lat = point.lat
+                                long = point.long
+                            }).region.id
                         )
                     }
                 }
@@ -133,7 +110,15 @@ private suspend fun loadCache() {
                         points.addAll(it.map { it })
                     }).scoreList.zip(it).map { (score, p) ->
                         val ll = Stubs.location.toLatitudeLongitude(p)
-                        PointScore(Point(ll.lat.toDouble(), ll.lon.toDouble()), t, score.toDouble())
+                        PointScoreWithRegion(
+                            Point(ll.lat.toDouble(), ll.lon.toDouble()),
+                            t,
+                            score.toDouble(),
+                            Stubs.region.getRegionContaining(point {
+                                lat = ll.lat.toDouble()
+                                long = ll.lon.toDouble()
+                            }).region.id
+                        )
                     }
                 }
             }
@@ -169,7 +154,7 @@ private val datasets = listOf(
 )
 
 val file = File("cache.json")
-lateinit var cache: List<PointScore>
+lateinit var cache: List<PointScoreWithRegion>
 
 @Serializable
 @Response("Point on the map with score")
@@ -180,6 +165,7 @@ data class PointScore(
     )
 
 @Serializable
+@Response("Point on the map with score")
 data class PointScoreWithRegion(
     val point: Point,
     val type: PostomatType,
