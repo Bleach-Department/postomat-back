@@ -84,6 +84,7 @@ private suspend fun loadCache() {
                     val i = csv[0].indexOf("Address")
                     val lati = csv[0].indexOf("latitude")
                     val longi = csv[0].indexOf("longitude")
+                    if (lati == -1 || longi == -1) return@flatMap listOf()
                     csv.drop(1).map {
                         Point(it[lati].toDouble(), it[longi].toDouble()) to it[i]
                     }
