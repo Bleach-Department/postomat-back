@@ -65,7 +65,30 @@ data class PostomatDTO(
     override val regionId: Long?,
     override val type: PostomatType,
     override val score: Double
-) : PointLike
+) : PointLike {
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PostomatDTO
+
+        if (point != other.point) return false
+        if (regionId != other.regionId) return false
+        if (type != other.type) return false
+        if (score != other.score) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = point.hashCode()
+        result = 31 * result + (regionId?.hashCode() ?: 0)
+        result = 31 * result + type.hashCode()
+        result = 31 * result + score.hashCode()
+        return result
+    }
+}
 
 private fun Postomat.toDTO() = PostomatDTO(
     id,
