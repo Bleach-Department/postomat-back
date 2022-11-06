@@ -79,7 +79,7 @@ private suspend fun loadCache() {
     cache = if (file.exists())
         Json.decodeFromString<List<PointScoreWithRegion>>(file.readText()).let { points ->
             datasets.flatMap { (f, t) ->
-                val csv = csvReader().readAll(File("dataset/$f").readText())
+                val csv = csvReader().readAll(File("/dataset/$f").readText())
                 if ("Address" in csv[0]) {
                     val i = csv[0].indexOf("Address")
                     val lati = csv[0].indexOf("latitude")
@@ -98,7 +98,7 @@ private suspend fun loadCache() {
         }
     else {
         datasets.flatMap { (f, t) ->
-            val csv = csvReader().readAll(File("dataset/$f").readText())
+            val csv = csvReader().readAll(File("/dataset/$f").readText())
             if ("geoData" in csv[0]) {
                 val i = csv[0].indexOf("geoData")
                 val ai = csv[0].indexOf("Address")
