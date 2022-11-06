@@ -31,10 +31,14 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
         }.let { emitAll(it) }
     }
 
-    override suspend fun getRegion(request: Id): Region {
-        return transaction {
-            database.Region.findById(request.id)!!
-                .toLittleProto()
+    override suspend fun getRegion(request: Id): Contains {
+        return contains {
+            transaction {
+                database.Region.findById(request.id)
+                    ?.toLittleProto()
+            }?.let {
+                region = it
+            }
         }
     }
 

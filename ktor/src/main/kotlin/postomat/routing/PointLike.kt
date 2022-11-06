@@ -3,7 +3,9 @@ package postomat.routing
 import io.github.reactivecircus.cache4k.Cache
 import me.plony.empty.id
 import me.plony.postomat.PostomatType
+import me.plony.regions.Contains
 import me.plony.regions.Region
+import me.plony.regions.regionOrNull
 import stubs.Stubs
 import kotlin.time.Duration.Companion.hours
 
@@ -23,7 +25,7 @@ suspend fun  <T: PointLike> List<T>.applyFilter(
 
 val pointLikeCache = Cache.Builder()
     .expireAfterWrite(1.hours)
-    .build<Long, Region>()
+    .build<Long, Contains>()
 
 suspend fun checkIfRegionNotInAO(
     filter: Filter,
@@ -31,5 +33,7 @@ suspend fun checkIfRegionNotInAO(
 ) = filter.ao != null &&
        pointLikeCache.get(it.regionId!!) {
            Stubs.region.getRegion(id { id = it.regionId!! })
-       }.let { !(it.hasParentId() && it.parentId in filter.ao) }
+       }.regionOrNull.let {
+           it == null || !(it.hasParentId() && it.parentId in filter.ao)
+       }
 
