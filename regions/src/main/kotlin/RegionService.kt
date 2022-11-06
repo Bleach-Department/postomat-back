@@ -1,5 +1,6 @@
 import database.RegionType
 import database.Ring
+import io.github.reactivecircus.cache4k.Cache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import me.plony.empty.Empty
@@ -10,9 +11,16 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.awt.Polygon
 import java.awt.geom.Point2D
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.minutes
 
 class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
     override val context: CoroutineContext = Dispatchers.IO
+    val littleRegionCache = Cache.Builder()
+        .expireAfterWrite(1.minutes)
+        .build<Int, List<Feature>>()
+    val regionCache = Cache.Builder()
+        .expireAfterWrite(1.minutes)
+        .build<Int, List<Pair<database.Region, Feature>>>()
 
     override fun geometryOfRegion(requests: Flow<Id>): Flow<MultiPolygon> = flow{
         requests.mapNotNull {
@@ -34,9 +42,11 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
     }
 
     override suspend fun getRegionsGeoJson(request: Empty): FeatureCollection {
-        val features = transaction {
-            database.Region.all()
-                .map { it.toProto() }
+        val features = littleRegionCache.get(1) {
+            transaction {
+                database.Region.all()
+                    .map { it.toProto() }
+            }
         }
         return featureCollection {
             this.features.addAll(features)
@@ -45,10 +55,12 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
 
     override suspend fun getRegionContaining(request: Point): Contains {
         val point = request.awtPoint()
-        val feature = transaction {
-            database.Region.all()
-                .filter { it.type == RegionType.District }
-                .map { it to it.toProto() }
+        val feature = regionCache.get(1) {
+            transaction {
+                database.Region.all()
+                    .filter { it.type == RegionType.District }
+                    .map { it to it.toProto() }
+            }
         }.firstOrNull { (_, feature) ->
             feature.containsPoint(point)
         }
