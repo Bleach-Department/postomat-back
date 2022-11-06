@@ -57,14 +57,16 @@ fun NormalOpenAPIRoute.score() {
         route("/export.xlsx") {
             get<Filter, File> { filter ->
                 val data = excelData(filter)
-                pipeline.call.respondOutputStream {
+                val workbook =
                     workbook {
                         sheet(name = "Данные") {
                             data.forEach {
                                 generateExcelRow(it)
                             }
                         }
-                    }.xssfWorkbook.write(this)
+                    }.xssfWorkbook
+                pipeline.call.respondOutputStream {
+                    workbook.write(this)
                 }
             }
         }
