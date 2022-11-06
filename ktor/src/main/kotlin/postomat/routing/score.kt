@@ -57,9 +57,9 @@ fun NormalOpenAPIRoute.score() {
         }
     }
 
-
-    loadCache()
     CoroutineScope(Dispatchers.IO).launch {
+        loadCache()
+
         Stubs.postomat.getAll(Empty.getDefaultInstance())
             .onEach {
                 Stubs.postomat.remove(id {
@@ -93,69 +93,67 @@ fun NormalOpenAPIRoute.score() {
     }
 }
 
-private fun loadCache() {
-    CoroutineScope(Dispatchers.IO).launch {
-        cache = if (file.exists()) Json.decodeFromString(file.readText())
-        else {
-            datasets.flatMap { (f, t) ->
-                val csv = csvReader().readAll(File("dataset/$f").readText())
-                if ("geoData" in csv[0]) {
-                    val i = csv[0].indexOf("geoData")
-                    val xi = csv[0].indexOf("x")
-                    val yi = csv[0].indexOf("y")
-                    csv.drop(1).map {
-                        println(it[i])
-                        Geometry.fromJson(it[i].replace('\'', '"')) to xY {
-                            x = it[xi].toFloat()
-                            y = it[yi].toFloat()
-                        }
-                    }.let {
-                        Stubs.model.assess(assessRequest {
-                            points.addAll(it.map { it.second })
-                        }).scoreList.zip(it).map { (score, p) ->
-                            val point = when (val a = p.first) {
-                                is MultiPoint -> Point(a.coordinates[0].latitude, a.coordinates[0].longitude)
-                                is io.github.dellisd.spatialk.geojson.Point -> Point(a.coordinates.latitude, a.coordinates.longitude)
-                                else -> error("Unknown ${p.first}")
-                            }
-                            PointScore(
-                                point,
-                                t,
-                                score.toDouble()
-                            )
-                        }
+private suspend fun loadCache() {
+    cache = if (file.exists()) Json.decodeFromString(file.readText())
+    else {
+        datasets.flatMap { (f, t) ->
+            val csv = csvReader().readAll(File("dataset/$f").readText())
+            if ("geoData" in csv[0]) {
+                val i = csv[0].indexOf("geoData")
+                val xi = csv[0].indexOf("x")
+                val yi = csv[0].indexOf("y")
+                csv.drop(1).map {
+                    println(it[i])
+                    Geometry.fromJson(it[i].replace('\'', '"')) to xY {
+                        x = it[xi].toFloat()
+                        y = it[yi].toFloat()
                     }
-                } else {
-                    val xi = csv[0].indexOf("x")
-                    val yi = csv[0].indexOf("y")
-                    csv.drop(1).map {
-                        xY {
-                            x = it[xi].toFloat()
-                            y = it[yi].toFloat()
+                }.let {
+                    Stubs.model.assess(assessRequest {
+                        points.addAll(it.map { it.second })
+                    }).scoreList.zip(it).map { (score, p) ->
+                        val point = when (val a = p.first) {
+                            is MultiPoint -> Point(a.coordinates[0].latitude, a.coordinates[0].longitude)
+                            is io.github.dellisd.spatialk.geojson.Point -> Point(a.coordinates.latitude, a.coordinates.longitude)
+                            else -> error("Unknown ${p.first}")
                         }
-                    }.let {
-                        Stubs.model.assess(assessRequest {
-                            points.addAll(it.map { it })
-                        }).scoreList.zip(it).map { (score, p) ->
-                            val ll = Stubs.location.toLatitudeLongitude(p)
-                            PointScore(Point(ll.lat.toDouble(), ll.lon.toDouble()), t, score.toDouble())
-                        }
+                        PointScore(
+                            point,
+                            t,
+                            score.toDouble()
+                        )
                     }
                 }
-            }.also {
-                file.writeText(Json.encodeToString(it))
-                it.sortedBy { it.score }
-                    .take(100)
-                    .forEach {
-                        Stubs.postomat.add(addRequest {
-                            point = point {
-                                lat = it.point.lat
-                                long = it.point.long
-                            }
-                            type = it.type
-                        })
+            } else {
+                val xi = csv[0].indexOf("x")
+                val yi = csv[0].indexOf("y")
+                csv.drop(1).map {
+                    xY {
+                        x = it[xi].toFloat()
+                        y = it[yi].toFloat()
                     }
+                }.let {
+                    Stubs.model.assess(assessRequest {
+                        points.addAll(it.map { it })
+                    }).scoreList.zip(it).map { (score, p) ->
+                        val ll = Stubs.location.toLatitudeLongitude(p)
+                        PointScore(Point(ll.lat.toDouble(), ll.lon.toDouble()), t, score.toDouble())
+                    }
+                }
             }
+        }.also {
+            file.writeText(Json.encodeToString(it))
+            it.sortedBy { it.score }
+                .take(100)
+                .forEach {
+                    Stubs.postomat.add(addRequest {
+                        point = point {
+                            lat = it.point.lat
+                            long = it.point.long
+                        }
+                        type = it.type
+                    })
+                }
         }
     }
 }
