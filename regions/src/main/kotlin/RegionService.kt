@@ -31,6 +31,13 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
         }.let { emitAll(it) }
     }
 
+    override suspend fun getRegion(request: Id): Region {
+        return transaction {
+            database.Region.findById(request.id)!!
+                .toLittleProto()
+        }
+    }
+
     override fun getRegions(request: Empty): Flow<Region> = flow {
         val regions = transaction {
             database.Region.all()
