@@ -1,7 +1,4 @@
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.*
 import me.plony.empty.Empty
 import me.plony.empty.Id
 import me.plony.geo.Point
@@ -31,12 +28,9 @@ class PostomatService : PostomatServiceGrpcKt.PostomatServiceCoroutineImplBase()
     }
 
     override fun getAll(request: Empty): Flow<Postomat> {
-        return flow {
-            transaction {
-                database.Postomat.all()
-            }.map { it.toProto() }
-                .let { emitAll(it.asFlow()) }
-        }
+        return transaction {
+            database.Postomat.all()
+        }.asFlow().map { it.toProto() }
     }
 
     override suspend fun remove(request: Id): Empty {

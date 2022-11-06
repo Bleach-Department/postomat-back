@@ -66,8 +66,10 @@ services:
       - backend
     links:
       - db
+      - regions
     depends_on:
       - db
+      - regions
 
 volumes:
   db:
