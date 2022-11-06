@@ -17,20 +17,19 @@ interface PointLike {
 suspend fun  <T: PointLike> List<T>.applyFilter(
     filter: Filter
 ) = filter {
-    !(checkIfRegionNotInAO(filter, it)) ||
-            !(filter.mo != null && it.regionId !in filter.mo) &&
+    (!(checkIfRegionNotInAO(filter, it)) || !(filter.mo != null && it.regionId !in filter.mo)) &&
             !(filter.scoreRange != null && it.score !in filter.scoreRange.let { it[0]..it[1] })
 }
 
 val pointLikeCache = Cache.Builder()
     .expireAfterWrite(1.hours)
-    .build<PointLike, Region>()
+    .build<Long, Region>()
 
 suspend fun checkIfRegionNotInAO(
     filter: Filter,
     it: PointLike,
 ) = filter.ao != null &&
-       pointLikeCache.get(it) {
+       pointLikeCache.get(it.regionId!!) {
            Stubs.region.getRegion(id { id = it.regionId!! })
        }.let { !(it.hasParentId() && it.parentId in filter.ao) }
 

@@ -59,19 +59,19 @@ fun NormalOpenAPIRoute.score() {
 
     CoroutineScope(Dispatchers.IO).launch {
         loadCache()
-        Stubs.postomat.removeAll(Empty.getDefaultInstance())
-        cache.sortedBy { it.score }
-            .reversed()
-            .take(1000)
-            .forEach {
-                Stubs.postomat.add(addRequest {
-                    point = point {
-                        lat = it.point.lat
-                        long = it.point.long
-                    }
-                    type = it.type
-                })
-            }
+//        Stubs.postomat.removeAll(Empty.getDefaultInstance())
+//        cache.sortedBy { it.score }
+//            .reversed()
+//            .take(1000)
+//            .forEach {
+//                Stubs.postomat.add(addRequest {
+//                    point = point {
+//                        lat = it.point.lat
+//                        long = it.point.long
+//                    }
+//                    type = it.type
+//                })
+//            }
     }
 }
 
