@@ -22,6 +22,9 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
         .expireAfterWrite(1.minutes)
         .build<Int, List<Pair<database.Region, Feature>>>()
 
+    /**
+     * Возвращяет полигон определенного региона
+     */
     override fun geometryOfRegion(requests: Flow<Id>): Flow<MultiPolygon> = flow{
         requests.mapNotNull {
             transaction {
@@ -31,6 +34,9 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
         }.let { emitAll(it) }
     }
 
+    /**
+     * Возвращяет данные по определенному региону
+     */
     override suspend fun getRegion(request: Id): Contains {
         return contains {
             transaction {
@@ -42,6 +48,9 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
         }
     }
 
+    /**
+     * Возвращяет все регионы
+     */
     override fun getRegions(request: Empty): Flow<Region> = flow {
         val regions = transaction {
             database.Region.all()
@@ -52,6 +61,10 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
         emitAll(regions.asFlow())
     }
 
+    /**
+     * Переводит в формат GeoJson все полигоны и возвращяет их.
+     * Note: Это сделано для ускорения получения GeoJson-а
+     */
     override suspend fun getRegionsGeoJson(request: Empty): FeatureCollection {
         val features = littleRegionCache.get(1) {
             transaction {
@@ -64,6 +77,9 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
         }
     }
 
+    /**
+     * Возвращяет район в котором находится точка
+     */
     override suspend fun getRegionContaining(request: Point): Contains {
         val point = request.awtPoint()
         val feature = regionCache.get(1) {

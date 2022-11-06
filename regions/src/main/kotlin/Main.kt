@@ -41,6 +41,13 @@ fun configureDatabase() {
             Points,
         )
     }
+    loadDataIfNecessary()
+}
+
+/**
+ * Загружает данные о регионах в базу данных
+ */
+private fun loadDataIfNecessary() {
     transaction {
         if (Region.count() == 0L) {
             val mo = FeatureCollection.fromJson(
@@ -65,9 +72,11 @@ fun configureDatabase() {
                 .forEach {
                     val region = Region.new {
                         name = it.properties["NAME"]!!.jsonPrimitive.content
-                        abbr = it.properties["ABBREV"]?.jsonPrimitive?.content ?: it.properties["NAME"]!!.jsonPrimitive.content
+                        abbr = it.properties["ABBREV"]?.jsonPrimitive?.content
+                            ?: it.properties["NAME"]!!.jsonPrimitive.content
                         type = RegionType.District
-                        parent = Region.find { Regions.name eq it.properties["NAME_AO"]!!.jsonPrimitive.content }.first()
+                        parent =
+                            Region.find { Regions.name eq it.properties["NAME_AO"]!!.jsonPrimitive.content }.first()
                     }
                     createGeometry(it, region)
                 }

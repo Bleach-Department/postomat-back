@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     id("com.google.protobuf") version "0.8.18" apply false
     kotlin("jvm") version "1.7.0" apply false

@@ -1,6 +1,7 @@
 package stubs
 
 import ModelGrpcKt
+import TransformLocationGrpcKt
 import me.plony.postomat.PostomatServiceGrpcKt
 import me.plony.regions.RegionsGrpcKt
 import stubs.Channels.locationChannel

@@ -46,19 +46,19 @@ fun NormalOpenAPIRoute.postomat() {
 }
 
 
-@Response("id of the element")
+@Response("ID элемента")
 data class Id(
     @QueryParam("id") val id: Long
 )
 
-@Response("Point on the map")
+@Response("Точка на карте")
 @Serializable
 data class Point(
-    @QueryParam("latitude") val lat: Double,
-    @QueryParam("longitude") val long: Double
+    @QueryParam("Долгота") val lat: Double,
+    @QueryParam("Широта") val long: Double
 )
 
-@Response("Postomat")
+@Response("Объект постомата")
 data class PostomatDTO(
     val id: Long,
     override val point: Point,

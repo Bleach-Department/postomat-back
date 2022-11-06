@@ -2,7 +2,6 @@ package postomat.routing
 
 import assessRequest
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
-import com.google.gson.Gson
 import com.papsign.ktor.openapigen.annotations.Response
 import com.papsign.ktor.openapigen.route.path.normal.NormalOpenAPIRoute
 import com.papsign.ktor.openapigen.route.path.normal.get
@@ -17,24 +16,18 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.count
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import latitudeLongitude
-import me.plony.empty.Empty
 import me.plony.empty.id
 import me.plony.geo.point
 import me.plony.postomat.PostomatType
-import me.plony.postomat.addRequest
 import me.plony.regions.regionOrNull
 import stubs.Stubs
 import xY
-import java.io.ByteArrayOutputStream
 import java.io.File
 
 fun NormalOpenAPIRoute.score() {
@@ -137,6 +130,10 @@ data class ExcelData(
     val score: Double,
 )
 
+/**
+ * Загружает кэш с данными или пересчитывает их на лету.
+ * TODO: персистировать данные в базу данных. Сделать это не костыльно
+ */
 private suspend fun loadCache() {
     cache = if (file.exists())
         Json.decodeFromString<List<PointScoreWithRegion>>(file.readText()).let { points ->
