@@ -20,7 +20,7 @@ fun  <A, T: PointLike> List<A>.applyFilter(
     val point = map(it)
     point.regionId != null &&
             !(filter.mo?.isNotEmpty() == true && point.regionId !in filter.mo) &&
-            !(filter.type != null && point.type !in filter.type) &&
+            !(filter.type?.isNotEmpty() != null && point.type !in filter.type) &&
             !(filter.scoreRange?.isNotEmpty() == true && point.score !in filter.scoreRange.let { it[0]..it[1] })
 }
 
