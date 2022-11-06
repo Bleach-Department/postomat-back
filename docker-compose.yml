@@ -11,6 +11,7 @@ services:
       - LOCATION_PORT=3110
     links:
       - regions
+      - postomat
     networks:
       - backend
     volumes:
