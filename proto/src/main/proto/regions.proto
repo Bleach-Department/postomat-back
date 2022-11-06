@@ -9,6 +9,7 @@ option java_outer_classname = "RegionsProto";
 package regions;
 
 service Regions {
+  rpc getRegion(Id) returns (Region) {}
   rpc getRegions(Empty) returns (stream Region) {}
   rpc getRegionsGeoJson(Empty) returns (geo.FeatureCollection) {}
   rpc getRegionContaining(geo.Point) returns (Contains) {}

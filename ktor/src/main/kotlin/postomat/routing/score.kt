@@ -47,9 +47,9 @@ fun NormalOpenAPIRoute.score() {
         }
 
         route("/heatmap") {
-            get<Unit, List<PointScoreWithRegion>> {
+            get<Filter, List<PointScoreWithRegion>> { filter ->
                 if (::cache.isInitialized) {
-                    respond(cache)
+                    respond(cache.applyFilter(filter))
                 } else {
                     pipeline.call.respond(HttpStatusCode.TemporaryRedirect)
                 }
@@ -62,7 +62,7 @@ fun NormalOpenAPIRoute.score() {
         Stubs.postomat.removeAll(Empty.getDefaultInstance())
         cache.sortedBy { it.score }
             .reversed()
-            .take(100)
+            .take(1000)
             .forEach {
                 Stubs.postomat.add(addRequest {
                     point = point {
@@ -170,11 +170,11 @@ data class PointScore(
 @Serializable
 @Response("Point on the map with score")
 data class PointScoreWithRegion(
-    val point: Point,
-    val type: PostomatType,
-    val score: Double,
-    val regionId: Long
-)
+    override val point: Point,
+    override val type: PostomatType,
+    override val score: Double,
+    override val regionId: Long
+) : PointLike
 
 data class Score(
     val score: Double
