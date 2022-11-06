@@ -52,12 +52,12 @@ fun NormalOpenAPIRoute.score() {
                 }
             }
         }
-        route("/export") {
+        route("/export.xlsx") {
             get<Filter, File> { filter ->
                 pipeline.call.respondOutputStream {
                     val data = excelData(filter)
                     workbook {
-                        sheet {
+                        sheet(name = "Данные") {
                             data.forEach {
                                 generateExcelRow(it)
                             }
