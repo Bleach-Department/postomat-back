@@ -49,7 +49,7 @@ fun NormalOpenAPIRoute.score() {
         route("/heatmap") {
             get<Filter, List<PointScoreWithRegion>> { filter ->
                 if (::cache.isInitialized) {
-                    respond(cache.applyFilter(filter))
+                    respond(cache.map { it.first }.applyFilter(filter))
                 } else {
                     pipeline.call.respond(HttpStatusCode.TemporaryRedirect)
                 }
@@ -76,28 +76,47 @@ fun NormalOpenAPIRoute.score() {
 }
 
 private suspend fun loadCache() {
-    cache = if (file.exists()) Json.decodeFromString(file.readText())
+    cache = if (file.exists())
+        Json.decodeFromString<List<PointScoreWithRegion>>(file.readText()).let { points ->
+            datasets.flatMap { (f, t) ->
+                val csv = csvReader().readAll(File("dataset/$f").readText())
+                if ("Address" in csv[0]) {
+                    val i = csv[0].indexOf("Address")
+                    val lati = csv[0].indexOf("latitude")
+                    val longi = csv[0].indexOf("longitude")
+                    csv.drop(1).map {
+                        Point(it[lati].toDouble(), it[longi].toDouble()) to it[i]
+                    }
+                } else {
+                    listOf()
+                }
+            }.associate { it }.let { addresses ->
+                points.map {
+                    it to addresses[it.point]
+                }
+            }
+        }
     else {
         datasets.flatMap { (f, t) ->
             val csv = csvReader().readAll(File("dataset/$f").readText())
             if ("geoData" in csv[0]) {
                 val i = csv[0].indexOf("geoData")
+                val ai = csv[0].indexOf("Address")
                 val xi = csv[0].indexOf("x")
                 val yi = csv[0].indexOf("y")
                 csv.drop(1).map {
-                    println(it[i])
                     Geometry.fromJson(it[i].replace('\'', '"')) to xY {
                         x = it[xi].toFloat()
                         y = it[yi].toFloat()
-                    }
+                    } to it[ai]
                 }.let {
                     Stubs.model.assess(assessRequest {
-                        points.addAll(it.map { it.second })
+                        points.addAll(it.map { it.first.second })
                     }).scoreList.zip(it).map { (score, p) ->
-                        val point = when (val a = p.first) {
+                        val point = when (val a = p.first.first) {
                             is MultiPoint -> Point(a.coordinates[0].latitude, a.coordinates[0].longitude)
                             is io.github.dellisd.spatialk.geojson.Point -> Point(a.coordinates.latitude, a.coordinates.longitude)
-                            else -> error("Unknown ${p.first}")
+                            else -> error("Unknown ${p.first.first}")
                         }
                         PointScoreWithRegion(
                             point,
@@ -107,7 +126,7 @@ private suspend fun loadCache() {
                                 lat = point.lat
                                 long = point.long
                             }).region.id
-                        )
+                        ) to p.second
                     }
                 }
             } else {
@@ -131,7 +150,7 @@ private suspend fun loadCache() {
                                 lat = ll.lat.toDouble()
                                 long = ll.lon.toDouble()
                             }).region.id
-                        )
+                        ) to null
                     }
                 }
             }
@@ -157,15 +176,7 @@ private val datasets = listOf(
 )
 
 val file = File("cache.json")
-lateinit var cache: List<PointScoreWithRegion>
-
-@Serializable
-@Response("Point on the map with score")
-data class PointScore(
-    val point: Point,
-    val type: PostomatType,
-    val score: Double,
-    )
+lateinit var cache: List<Pair<PointScoreWithRegion, String?>>
 
 @Serializable
 @Response("Point on the map with score")

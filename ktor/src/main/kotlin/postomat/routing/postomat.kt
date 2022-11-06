@@ -95,5 +95,5 @@ private fun Postomat.toDTO() = PostomatDTO(
     Point(point.lat, point.long),
     if (hasRegionId()) regionId else null,
     type,
-    cache.find { it.point == Point(point.lat, point.long) }?.score ?: -1.0
+    cache.find { it.first.point == Point(point.lat, point.long) }?.first?.score ?: -1.0
 )

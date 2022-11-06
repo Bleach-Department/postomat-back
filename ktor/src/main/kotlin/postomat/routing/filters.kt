@@ -1,6 +1,7 @@
 package postomat.routing
 
 import com.papsign.ktor.openapigen.annotations.parameters.QueryParam
+import me.plony.postomat.PostomatType
 
 data class Filter(
     @QueryParam("Administrative Districts")
@@ -11,4 +12,6 @@ data class Filter(
     val scoreRange: List<Double>? = null,
     @QueryParam("Distance as a metric for ML")
     val distance: Int? = null,
+    @QueryParam("Postomat Type")
+    val type: PostomatType? = null
 )
