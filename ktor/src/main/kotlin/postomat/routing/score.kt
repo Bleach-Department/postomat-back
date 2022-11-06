@@ -60,12 +60,7 @@ fun NormalOpenAPIRoute.score() {
     CoroutineScope(Dispatchers.IO).launch {
         loadCache()
 
-        Stubs.postomat.getAll(Empty.getDefaultInstance())
-            .onEach {
-                Stubs.postomat.remove(id {
-                    id = it.id
-                })
-            }.collect()
+        Stubs.postomat.removeAll(Empty.getDefaultInstance())
 
         cache.sortedBy { it.score }
             .reversed()

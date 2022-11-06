@@ -9,6 +9,7 @@ import me.plony.postomat.Postomat
 import me.plony.postomat.PostomatServiceGrpcKt
 import me.plony.postomat.postomat
 import me.plony.regions.regionOrNull
+import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import stubs.Stubs
 
@@ -37,6 +38,13 @@ class PostomatService : PostomatServiceGrpcKt.PostomatServiceCoroutineImplBase()
         transaction {
             database.Postomat.findById(request.id)
                 ?.delete()
+        }
+        return Empty.getDefaultInstance()
+    }
+
+    override suspend fun removeAll(request: Empty): Empty {
+        transaction {
+            database.Postomats.deleteAll()
         }
         return Empty.getDefaultInstance()
     }

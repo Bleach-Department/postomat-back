@@ -12,6 +12,7 @@ service PostomatService {
   rpc add(AddRequest) returns (Postomat) {}
   rpc getAll(Empty) returns (stream Postomat) {}
   rpc remove(Id) returns (Empty) {}
+  rpc removeAll(Empty) returns (Empty) {}
 }
 
 
