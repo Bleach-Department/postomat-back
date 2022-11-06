@@ -16,12 +16,14 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import latitudeLongitude
+import me.plony.empty.Empty
 import me.plony.empty.id
 import me.plony.geo.point
 import me.plony.postomat.PostomatType
@@ -74,12 +76,15 @@ fun NormalOpenAPIRoute.score() {
 }
 
 private suspend fun excelData(filter: Filter): List<ExcelData> {
+    val regions = Stubs.region.getRegions(Empty.getDefaultInstance())
+        .toList().associateBy { it.id }
+
     val data = cache.applyFilter(filter) {
         it.first
     }.withIndex().mapNotNull { (index, p) ->
         val (point, address) = p
-        val region = Stubs.region.getRegion(id { id = point.regionId }).regionOrNull ?: return@mapNotNull null
-        val parent = Stubs.region.getRegion(id { id = region.parentId }).regionOrNull ?: return@mapNotNull null
+        val region = regions[point.regionId] ?: return@mapNotNull null
+        val parent = regions[region.parentId] ?: return@mapNotNull null
         ExcelData(
             index + 1,
             parent.name,
