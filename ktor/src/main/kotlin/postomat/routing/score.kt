@@ -81,22 +81,24 @@ private suspend fun excelData(filter: Filter): List<ExcelData> {
     val regions = Stubs.region.getRegions(Empty.getDefaultInstance())
         .toList().associateBy { it.id }
 
-    val data = cache.applyFilter(filter) {
-        it.first
-    }.withIndex().mapNotNull { (index, p) ->
-        val (point, address) = p
-        val region = regions[point.regionId] ?: return@mapNotNull null
-        val parent = regions[region.parentId] ?: return@mapNotNull null
-        ExcelData(
-            index + 1,
-            parent.name,
-            region.name,
-            point.type,
-            "[${point.point.long}, ${point.point.lat}]",
-            address ?: "-",
-            point.score
-        )
-    }
+    val data = cache
+        .sortedByDescending { it.first.score }
+        .applyFilter(filter) {
+            it.first
+        }.withIndex().mapNotNull { (index, p) ->
+            val (point, address) = p
+            val region = regions[point.regionId] ?: return@mapNotNull null
+            val parent = regions[region.parentId] ?: return@mapNotNull null
+            ExcelData(
+                index + 1,
+                parent.name,
+                region.name,
+                point.type,
+                "[${point.point.long}, ${point.point.lat}]",
+                address ?: "-",
+                point.score
+            )
+      }
     return data
 }
 
