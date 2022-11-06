@@ -15,7 +15,9 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.count
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -23,6 +25,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import latitudeLongitude
 import me.plony.empty.Empty
+import me.plony.empty.id
 import me.plony.geo.point
 import me.plony.postomat.PostomatType
 import me.plony.postomat.addRequest
@@ -56,6 +59,38 @@ fun NormalOpenAPIRoute.score() {
 
 
     loadCache()
+    CoroutineScope(Dispatchers.IO).launch {
+        Stubs.postomat.getAll(Empty.getDefaultInstance())
+            .onEach {
+                Stubs.postomat.remove(id {
+                    id = it.id
+                })
+            }.collect()
+
+        cache.sortedBy { it.score }
+            .reversed()
+            .forEach {
+                Stubs.postomat.add(addRequest {
+                    point = point {
+                        lat = it.point.lat
+                        long = it.point.long
+                    }
+                    type = it.type
+                })
+            }
+
+        file.writeText(Json.encodeToString(cache.map {
+            PointScoreWithRegion(
+                it.point,
+                it.type,
+                it.score,
+                Stubs.region.getRegionContaining(point {
+                    lat = it.point.lat
+                    long = it.point.long
+                }).region.id
+            ).also { println(it) }
+        }))
+    }
 }
 
 private fun loadCache() {
@@ -63,8 +98,7 @@ private fun loadCache() {
         cache = if (file.exists()) Json.decodeFromString(file.readText())
         else {
             datasets.flatMap { (f, t) ->
-                val csv = csvReader().readAll(ClassLoader.getSystemResource("dataset/$f")
-                    .readText())
+                val csv = csvReader().readAll(File("dataset/$f").readText())
                 if ("geoData" in csv[0]) {
                     val i = csv[0].indexOf("geoData")
                     val xi = csv[0].indexOf("x")
@@ -145,7 +179,19 @@ lateinit var cache: List<PointScore>
 
 @Serializable
 @Response("Point on the map with score")
-data class PointScore(val point: Point, val type: PostomatType, val score: Double)
+data class PointScore(
+    val point: Point,
+    val type: PostomatType,
+    val score: Double,
+    )
+
+@Serializable
+data class PointScoreWithRegion(
+    val point: Point,
+    val type: PostomatType,
+    val score: Double,
+    val regionId: Long
+)
 
 data class Score(
     val score: Double

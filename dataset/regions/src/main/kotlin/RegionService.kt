@@ -1,5 +1,4 @@
-import com.google.protobuf.StringValue
-import com.google.protobuf.any
+import database.RegionType
 import database.Ring
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -48,6 +47,7 @@ class RegionService : RegionsGrpcKt.RegionsCoroutineImplBase() {
         val point = request.awtPoint()
         val feature = transaction {
             database.Region.all()
+                .filter { it.type == RegionType.District }
                 .map { it to it.toProto() }
         }.firstOrNull { (_, feature) ->
             feature.containsPoint(point)

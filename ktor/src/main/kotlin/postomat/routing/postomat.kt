@@ -28,13 +28,20 @@ import me.plony.postomat.PostomatType
 import me.plony.postomat.addRequest
 import stubs.Stubs
 import java.io.File
+import kotlin.time.Duration.Companion.minutes
+
+val postomatCache = Cache.Builder()
+    .expireAfterWrite(1.minutes)
+    .build<Int, List<PostomatDTO>>()
 
 fun NormalOpenAPIRoute.postomat() {
     route("/postomats") {
         get<Unit, List<PostomatDTO>> {
-            val postomats = Stubs.postomat.getAll(Empty.getDefaultInstance())
-                .toList()
-                .map { it.toDTO() }
+            val postomats = postomatCache.get(1) {
+                Stubs.postomat.getAll(Empty.getDefaultInstance())
+                    .toList()
+                    .map { it.toDTO() }
+            }
 
             respond(postomats)
         }
@@ -64,12 +71,14 @@ data class PostomatDTO(
     val id: Long,
     val point: Point,
     val regionId: Long?,
-    val type: PostomatType
+    val type: PostomatType,
+    val score: Double
 )
 
 private fun Postomat.toDTO() = PostomatDTO(
     id,
     Point(point.lat, point.long),
     if (hasRegionId()) regionId else null,
-    type
+    type,
+    cache.find { it.point == Point(point.lat, point.long) }?.score ?: -1.0
 )
