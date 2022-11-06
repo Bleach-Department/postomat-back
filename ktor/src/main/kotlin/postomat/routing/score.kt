@@ -69,6 +69,7 @@ fun NormalOpenAPIRoute.score() {
 
         cache.sortedBy { it.score }
             .reversed()
+            .take(100)
             .forEach {
                 Stubs.postomat.add(addRequest {
                     point = point {
@@ -79,7 +80,7 @@ fun NormalOpenAPIRoute.score() {
                 })
             }
 
-        file.writeText(Json.encodeToString(cache.map {
+        file.writeText(Json.encodeToString(cache.withIndex().map { (index, it) ->
             PointScoreWithRegion(
                 it.point,
                 it.type,
@@ -88,7 +89,7 @@ fun NormalOpenAPIRoute.score() {
                     lat = it.point.lat
                     long = it.point.long
                 }).region.id
-            ).also { println(it) }
+            ).also { println(index) }
         }))
     }
 }
