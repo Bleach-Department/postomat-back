@@ -51,7 +51,6 @@ fun NormalOpenAPIRoute.postomat() {
             respond(Unit)
         }
     }
-
 }
 
 @Response("id of the element")
