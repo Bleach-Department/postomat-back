@@ -14,7 +14,7 @@ services:
     networks:
       - backend
     volumes:
-      - ./cache.json
+      - ./cache.json:/cache.json
   db:
     image: postgres:14.1-alpine
     restart: always
